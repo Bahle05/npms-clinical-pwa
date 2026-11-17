@@ -1,0 +1,38 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "patients",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "Status", "order": "ASCENDING" },
+        { "fieldPath": "TriageLevel", "order": "ASCENDING" },
+        { "fieldPath": "AdmissionTimestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "vitals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "PatientID", "order": "ASCENDING" },
+        { "fieldPath": "RecordedTimestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "prescriptions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "PatientID", "order": "ASCENDING" },
+        { "fieldPath": "AuthorizationTimestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "audit",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ActorStaffID", "order": "ASCENDING" },
+        { "fieldPath": "Ts", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

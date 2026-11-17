@@ -1,0 +1,15 @@
+{
+  "appId": "za.ac.uwc.softwarexccelerators.npms",
+  "appName": "NPMS Clinical",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#0F172A"
+    }
+  }
+}

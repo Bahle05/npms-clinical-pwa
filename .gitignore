@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+dist-singlefile/
+android/app/build/
+ios/App/build/
+
+# Firebase local cache and debug logs
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+serviceAccount*.json
+
+# Test / tooling output
+coverage/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

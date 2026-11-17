@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function staffProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isActiveStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && staffProfile().IsActive == true;
+    }
+
+    function isPhysician() {
+      return isActiveStaff()
+        && (staffProfile().Role == 'Physician' || staffProfile().Role == 'Doctor');
+    }
+
+    function isNurse() {
+      return isActiveStaff() && staffProfile().Role == 'Nurse';
+    }
+
+    // USER collection: nothing readable without sign-in; staff can read profiles and manage their own session login timestamp
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // PATIENT collection and normalized PATIENT_ALLERGY subcollection: writable only by authenticated active staff
+    match /patients/{patientId} {
+      allow read: if isActiveStaff();
+      allow create, update: if isActiveStaff();
+      allow delete: if false;
+
+      match /allergies/{allergyId} {
+        allow read, create, update: if isActiveStaff();
+        allow delete: if false;
+      }
+    }
+
+    // VITAL_SIGN collection: readable and writable only by authenticated active clinical staff
+    match /vitals/{vitalId} {
+      allow read: if isActiveStaff();
+      allow create: if isActiveStaff()
+        && request.resource.data.HeartRate >= 20
+        && request.resource.data.HeartRate <= 250
+        && request.resource.data.BloodPressureSystolic >= 50
+        && request.resource.data.BloodPressureSystolic <= 260
+        && request.resource.data.BloodPressureDiastolic >= 30
+        && request.resource.data.BloodPressureDiastolic <= 160
+        && request.resource.data.OxygenSaturation >= 50
+        && request.resource.data.OxygenSaturation <= 100;
+      allow update, delete: if false;
+    }
+
+    // CONSULTATION_NOTE collection: append-only clinical progress notes by active staff
+    match /consultations/{consultId} {
+      allow read, create: if isActiveStaff();
+      allow update, delete: if false;
+    }
+
+    // MEDICATION (Formulary) & DRUG_INTERACTION: readable by active staff; seeded on initialization
+    match /medications/{drugId} {
+      allow read: if isActiveStaff();
+      allow create: if isActiveStaff();
+      allow update, delete: if false;
+    }
+
+    match /drug_interactions/{interactionId} {
+      allow read: if isActiveStaff();
+      allow create: if isActiveStaff();
+      allow update, delete: if false;
+    }
+
+    // PRESCRIPTION collection: ONLY Physicians may create a prescription;
+    // Active Nurses or Physicians may update Status (Pending -> Administered / Cancelled)
+    match /prescriptions/{prescriptionId} {
+      allow read: if isActiveStaff();
+      // Physicians create Pending orders. The one-time demo seed (before meta/seed exists) may
+      // also create historical orders; after seeding this second branch is permanently closed.
+      allow create: if (isPhysician() && request.resource.data.Status == 'Pending')
+        || (isActiveStaff() && !exists(/databases/$(database)/documents/meta/seed));
+      allow update: if (isNurse() || isPhysician())
+        && (request.resource.data.Status == 'Administered' || request.resource.data.Status == 'Cancelled')
+        && request.resource.data.DrugID == resource.data.DrugID
+        && request.resource.data.PatientID == resource.data.PatientID;
+      allow delete: if false;
+    }
+
+    // AUDIT_LOG collection: strictly create-only (append-only); NEVER updated or deleted
+    match /audit/{logId} {
+      allow read: if isActiveStaff();
+      allow create: if isActiveStaff()
+        && request.resource.data.IntegrityHash is string
+        && request.resource.data.PrevHash is string;
+      allow update, delete: if false;
+    }
+
+    // META counters and seed flags
+    match /meta/{docId} {
+      allow read, write: if isActiveStaff();
+    }
+  }
+}
