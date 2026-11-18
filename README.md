@@ -69,4 +69,4 @@ Without Firebase settings the app runs on its in-memory repository. To use your 
 ## Team
 
 Software Xccelerators, CSC312 Software Engineering, University of the Western Cape, 2026.
-Repository maintained by [Bahle Ludidi](https://www.linkedin.com/in/bahle-ludidi-727657352).
+Technical lead and repository maintainer: [Bahle Ludidi](https://www.linkedin.com/in/bahle-ludidi-727657352).
