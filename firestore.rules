@@ -28,7 +28,12 @@ service cloud.firestore {
     // USER collection: nothing readable without sign-in; staff can read profiles and manage their own session login timestamp
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      // A profile can only be created for yourself, under your own sign-in email
+      allow create: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.Email == request.auth.token.email;
+      // Staff may only refresh their own login timestamp; Role and IsActive cannot be self-assigned
+      allow update: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['LastLoginTime']);
       allow delete: if false;
     }
 
